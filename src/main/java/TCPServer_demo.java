@@ -9,14 +9,17 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.StringTokenizer;
 
 public class TCPServer_demo
 {
+    private static String line = "dummy";
+    private static String token;
+    private static String fileName;
+
     public static void main(String argv[]) throws Exception
     {
         System.out.println("starting main");
-        String sentence;
-        String userText;
         boolean go_on = true;
         int counter = 0;
 
@@ -27,36 +30,46 @@ public class TCPServer_demo
         while(go_on)
         {
             counter++;
-            System.out.println("waiting for a connection");
+            System.out.println("Waiting for a connection...");
             Socket connectionSocket = welcomeSocket.accept();
             BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
             DataOutputStream  outToClient = new DataOutputStream(connectionSocket.getOutputStream());
             readAllLines(inFromClient);
 
-            System.out.print("I'm sending back to client: Hum hum, foo,...");
-            outToClient.writeBytes("HTTP/1.0 200 Alt er OK\n");
-            outToClient.writeBytes("Server: Kris demo server\r\n\r\n");
-            outToClient.writeBytes("Hum hum, foo, bar,... and bla bla. counter = " + counter);
-
-            System.out.println("Quitting the loop and closing the socket to client");
+            System.out.println("I'm sending back to client: Hum hum, foo,...");
+            outToClient.writeBytes("HTTP/1.1 200 OK\r\n");
+            outToClient.writeBytes("Server: Kris demo server\r\n");
+            outToClient.writeBytes("\r\n");
+            outToClient.writeBytes("Hum hum, foo, bla bla bla,... and bla bla. counter = " + counter);
+            outToClient.writeBytes("\r\n");
+            outToClient.writeBytes("Echo: " + fileName);
             connectionSocket.close();
+            if (fileName.equals("/quit"))
+            {
+                go_on = false;
+            }
+            System.out.println("Sent data to client.");
         }
 
         System.out.println("Quitting the Server and closing the main socket!!!!!!!!!!!!!!!**************");
         welcomeSocket.close();
     }
 
-
     static private void readAllLines(BufferedReader ifc) throws Exception
     {
-        String line = "dummy";
         BufferedReader inFromClient = ifc;
-        while (!line.equals(""))
+        line = inFromClient.readLine();
+        while (line.length() > 0)
         {
-            line = inFromClient.readLine();
             System.out.println("FROM CLIENT: " + line);
+            StringTokenizer tokenizer = new StringTokenizer(line);
+            token = tokenizer.nextToken();
+            if (token.equals("GET"))
+            {
+                fileName = tokenizer.nextToken();
+            }
+            line = inFromClient.readLine();
         }
-
     }
 
 
